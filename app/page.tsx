@@ -21,20 +21,7 @@ interface FormState {
   source:string;   // For Reference 
 }
 
-interface FormErrors {
-  name?: string;
-  email?: string;
-  phone?: string;
-  college?: string;
-  degree?: string;
-  last_exam_appeared?: string;
-  cgpa?: string;
-  domain?: string;
-  duration?: string; // Added
-  skills?: string;
-  resume_path?: string;
-  source?:string;   // For Reference 
-}
+
 
 interface AlertState {
   show: boolean;
@@ -69,7 +56,7 @@ export default function RegisterPage() {
   });
 
   const [resume_path, setResume] = useState<File | null>(null);
-  const [errors, setErrors] = useState<FormErrors>({});
+  
   const [alert, setAlert] = useState<AlertState>({ show: false, message: "", type: "success" });
 
   // Email Verification State
@@ -127,6 +114,7 @@ export default function RegisterPage() {
 
     try {
       const res = await fetch(
+        // `${process.env.NEXT_PUBLIC_API_URL}/api/applicant/send-verification`,
         "https://mansi.durvasaprakrutik.com/api/applicant/send-verification",
         {
           method: "POST",
@@ -170,11 +158,16 @@ if (data.verified === true) {
 // Phone input handler
 
   const handlePhoneChange = (v: string) => {
-    const onlyNums = v.replace(/[^0-9]/g, "");
-    if (onlyNums.length <= 10) {
-      setForm({ ...form, phone: onlyNums });
-      if (onlyNums.length === 10) setErrors(prev => ({ ...prev, phone: "" }));
-    }
+    
+    // const onlyNums = v.replace(/[^0-9]/g, "");
+    // if (onlyNums.length <= 10) {
+    //   setForm({ ...form, phone: onlyNums });
+    //   if (onlyNums.length === 10) setErrors(prev => ({ ...prev, phone: "" }));
+    // }
+
+     const onlyNums = v.replace(/\D/g, "").slice(0, 10);
+  setForm({ ...form, phone: onlyNums });
+
   };
 
   ///--------------------
@@ -191,7 +184,7 @@ if (data.verified === true) {
       return;
     }
     setResume(file);
-    setErrors(prev => ({ ...prev, resume_path: "" }));
+    //setErrors(prev => ({ ...prev, resume_path: "" }));
   };
 
   // ---------------------------------
@@ -203,70 +196,75 @@ if (data.verified === true) {
 
   
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (emailStep !== "verified") {
-      showAlert("Please verify your email before submitting", "error");
-      return;
-    }
+  if (emailStep !== "verified") {
+    showAlert("Please verify your email before submitting", "error");
+    return;
+  }
 
-    let tempErrors: FormErrors = {};
-    if (!form.name) tempErrors.name = "Required";
-    if (!form.email) tempErrors.email = "Required";
-    if (form.phone.length !== 10) tempErrors.phone = "Must be 10 digits";
-    if (!form.college) tempErrors.college = "Required";
-    if (!form.degree) tempErrors.degree = "Required";
-    if (!form.domain) tempErrors.domain = "Required";
-    if (!form.duration) tempErrors.duration = "Required"; // Added
-    if (!form.skills) tempErrors.skills = "Required";
-    if (!resume_path) tempErrors.resume_path = "Required";
-    if (!form.last_exam_appeared) tempErrors.last_exam_appeared = "Required";
-    if (!form.cgpa) tempErrors.cgpa = "Required";
+  if (!resume_path) {
+    showAlert("Please upload resume", "error");
+    return;
+  }
 
-    if (Object.keys(tempErrors).length > 0) {
-      setErrors(tempErrors);
-      showAlert("Please fill all required fields correctly", "error");
-      return;
-    }
+  setLoading(true);
 
-    setLoading(true);
-    try 
-    {
-      const formData = new FormData();
-      Object.entries(form).forEach(([k, v]) => formData.append(k, v));
-      if (resume_path) formData.append("resume", resume_path);
+  try {
+    const formData = new FormData();
+    Object.entries(form).forEach(([k, v]) => formData.append(k, v));
+    formData.append("resume_path", resume_path);
 
-      const res = await fetch(
-        "https://mansi.durvasaprakrutik.com/api/applicant/submit/",     // Backend api
+    const res = await fetch(
+      "https://mansi.durvasaprakrutik.com/api/applicant/submit",
       {
         method: "POST",
         body: formData,
         headers: { Accept: "application/json" },
-      } );
-
-      const data = await res.json();
-      if (!res.ok) throw data;
-
-      showAlert("Application submitted successfully!", "success");
-      setForm({
-        name: "", email: "", phone: "", college: "", degree: "",
-        last_exam_appeared: "", cgpa: "", domain: "", duration: "", duration_unit: "months", skills: "",
-        source:"" 
-      });
-      setResume(null);
-  
-      setEmailStep("email");
-
-            // 🔥 THIS is the key line for making file upload null
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
       }
-    } catch (err: any) {
-      showAlert(err?.message || "Server error", "error");
-    } finally {
-      setLoading(false);
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      // Laravel validation errors
+      if (data.errors) {
+        const firstError = Object.values(data.errors)[0] as string[];
+        throw new Error(firstError[0]);
+      }
+      throw new Error(data.message || "Submission failed");
     }
-  };
+
+    showAlert("Application submitted successfully!", "success");
+
+    setForm({
+      name: "",
+      email: "",
+      phone: "",
+      college: "",
+      degree: "",
+      last_exam_appeared: "",
+      cgpa: "",
+      domain: "",
+      duration: "",
+      duration_unit: "months",
+      source: "",
+      skills: "",
+    });
+
+    setResume(null);
+    setEmailStep("email");
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+
+  } catch (err: any) {
+    showAlert(err.message || "Server error", "error");
+  } finally {
+    setLoading(false);
+  }
+};
 
    /* ===================================================== */
 
@@ -322,7 +320,7 @@ if (data.verified === true) {
           <div className="mb-4">
             <Input label="Email Address" type="email" required 
                    placeholder="Enter your email" value={form.email} 
-                   error={errors.email} onChange={(v) => { setForm({ ...form, email: v }); setEmailStep("email"); }} 
+                    onChange={(v) => { setForm({ ...form, email: v }); setEmailStep("email"); }} 
                    
               />
               
@@ -363,13 +361,13 @@ if (data.verified === true) {
           className={emailStep !== "verified" ? "opacity-60" : ""}
         > 
           <div className="grid md:grid-cols-2 gap-6">
-            <Input label="Full Name" required placeholder="Enter full name" value={form.name} error={errors.name} onChange={(v) => setForm({ ...form, name: v })} />
-            <Input label="Phone Number" type="tel" required placeholder="Enter Phone Number" value={form.phone} error={errors.phone} onChange={handlePhoneChange} />
-            <Input label="College Name" required placeholder="Enter college name" value={form.college} error={errors.college} onChange={(v) => setForm({ ...form, college: v })} />
-            <Input label="Degree" required placeholder="Enter Degree e.g B.Tech, BCA" value={form.degree} error={errors.degree} onChange={(v) => setForm({ ...form, degree: v })} />
-            <Input label="Last Exam Appeared" required placeholder="e.g. Sem 3, Sem 6, Final Year" value={form.last_exam_appeared} error={errors.last_exam_appeared} onChange={(v) => setForm({ ...form, last_exam_appeared: v })} />
-            <Input label="CGPA / Percentage" type="number" required placeholder="e.g. 8.5, 85.5" value={form.cgpa} error={errors.cgpa} onChange={(v) => setForm({ ...form, cgpa: v })} />
-            <Input label="Preferred Domain" required placeholder="Enter Your Domain" value={form.domain} error={errors.domain} onChange={(v) => setForm({ ...form, domain: v })} />
+            <Input label="Full Name" required placeholder="Enter full name" value={form.name}  onChange={(v) => setForm({ ...form, name: v })} />
+            <Input label="Phone Number" type="tel" required placeholder="Enter Phone Number" value={form.phone}  onChange={handlePhoneChange} />
+            <Input label="College Name" required placeholder="Enter college name" value={form.college}  onChange={(v) => setForm({ ...form, college: v })} />
+            <Input label="Degree" required placeholder="Enter Degree e.g B.Tech, BCA" value={form.degree}  onChange={(v) => setForm({ ...form, degree: v })} />
+            <Input label="Last Exam Appeared" required placeholder="e.g. Sem 3, Sem 6, Final Year" value={form.last_exam_appeared}  onChange={(v) => setForm({ ...form, last_exam_appeared: v })} />
+            <Input label="CGPA / Percentage" type="number" required placeholder="e.g. 8.5, 85.5" value={form.cgpa}  onChange={(v) => setForm({ ...form, cgpa: v })} />
+            <Input label="Preferred Domain" required placeholder="Enter Your Domain" value={form.domain}  onChange={(v) => setForm({ ...form, domain: v })} />
             
             {/* DURATION FIELD START */}
             <div>
@@ -395,7 +393,7 @@ if (data.verified === true) {
                   <option value="hours">Hours</option>
                 </select>
               </div>
-              {errors.duration && <p className="text-red-500 text-xs mt-1">{errors.duration}</p>}
+              
             </div>
             {/* DURATION FIELD END */}
  {/* Reference FIELD START */}
@@ -418,7 +416,7 @@ if (data.verified === true) {
                   <option value="college">College/Institute</option>
                 </select>
               </div>
-              <p className="text-red-500 text-xs mt-1">{errors.source}</p>
+              
             </div>
             {/* Reference FIELD END */}
           </div>
@@ -426,7 +424,7 @@ if (data.verified === true) {
           <div className="mt-6">
             <label className="block text-sm font-semibold mb-1">Skills (comma separated)<span className="text-red-500">*</span></label>
             <textarea value={form.skills} placeholder="e.g. React, Node.js, PHP, Tailwind" className="w-full border border-slate-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-24 bg-white text-slate-900" onChange={(e) => setForm({ ...form, skills: e.target.value })} />
-            {errors.skills && <p className="text-red-500 text-xs mt-1">{errors.skills}</p>}
+           
           </div>
 
           <div className="mt-6">
@@ -436,7 +434,7 @@ if (data.verified === true) {
             type="file" accept=".pdf"
             className="w-full border p-2 rounded-lg bg-white text-slate-900" 
             onChange={(e) => handleResumeChange(e.target.files?.[0])} />
-            {errors.resume_path && <p className="text-red-500 text-xs mt-1">{errors.resume_path}</p>}
+            
           </div>
 
           <button disabled={loading} type="submit" className={`mt-8 w-full py-4 rounded-lg font-bold text-white transition-all ${loading ? 'bg-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 shadow-lg'}`}>
