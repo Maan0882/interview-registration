@@ -127,7 +127,7 @@ export default function RegisterPage() {
 
     try {
       const res = await fetch(
-        "http://127.0.0.1:8000/api/applicant/send-verification",
+        "https://mansi.durvasaprakrutik.com/api/applicant/send-verification",
         {
           method: "POST",
           headers: {
@@ -237,7 +237,7 @@ if (data.verified === true) {
       if (resume_path) formData.append("resume", resume_path);
 
       const res = await fetch(
-        "http://127.0.0.1:8000/api/applicant/submit/",     // Backend api
+        "https://mansi.durvasaprakrutik.com/api/applicant/submit/",     // Backend api
       {
         method: "POST",
         body: formData,
