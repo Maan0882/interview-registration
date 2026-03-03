@@ -18,7 +18,7 @@ interface FormState {
   duration: string; // Added
   duration_unit: string;  // Added
   skills: string;
-  refer:string;   // For Reference 
+  source:string;   // For Reference 
 }
 
 interface FormErrors {
@@ -33,7 +33,7 @@ interface FormErrors {
   duration?: string; // Added
   skills?: string;
   resume_path?: string;
-  refer?:string;   // For Reference 
+  source?:string;   // For Reference 
 }
 
 interface AlertState {
@@ -64,7 +64,7 @@ export default function RegisterPage() {
     domain: "",
     duration: "", // Added
     duration_unit: "months", // Default Added
-    refer:"",   // For Reference 
+    source:"",   // For Reference 
     skills: "",
   });
 
@@ -127,7 +127,7 @@ export default function RegisterPage() {
 
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/applicant/send-verification`,
+        "http://127.0.0.1:8000/api/applicant/send-verification",
         {
           method: "POST",
           headers: {
@@ -234,10 +234,10 @@ if (data.verified === true) {
     {
       const formData = new FormData();
       Object.entries(form).forEach(([k, v]) => formData.append(k, v));
-      if (resume_path) formData.append("resume_path", resume_path);
+      if (resume_path) formData.append("resume", resume_path);
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/applicant/submit/`,     // Backend api
+        "http://127.0.0.1:8000/api/applicant/submit/",     // Backend api
       {
         method: "POST",
         body: formData,
@@ -251,7 +251,7 @@ if (data.verified === true) {
       setForm({
         name: "", email: "", phone: "", college: "", degree: "",
         last_exam_appeared: "", cgpa: "", domain: "", duration: "", duration_unit: "months", skills: "",
-        refer:"" 
+        source:"" 
       });
       setResume(null);
   
@@ -406,9 +406,9 @@ if (data.verified === true) {
               <div className="flex gap-2">
                 
                 <select
-                  value={form.refer}
+                  value={form.source}
                   className="w-1/2 border border-slate-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white text-slate-900"
-                  onChange={(e) => setForm({ ...form, refer: e.target.value })}
+                  onChange={(e) => setForm({ ...form, source: e.target.value })}
                 >
                   <option value="website">Website</option>
                   <option value="search">Search</option>
@@ -418,7 +418,7 @@ if (data.verified === true) {
                   <option value="college">College/Institute</option>
                 </select>
               </div>
-              <p className="text-red-500 text-xs mt-1">{errors.refer}</p>
+              <p className="text-red-500 text-xs mt-1">{errors.source}</p>
             </div>
             {/* Reference FIELD END */}
           </div>
