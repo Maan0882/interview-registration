@@ -184,7 +184,7 @@ export default function RegisterPage() {
       
       {/* SUCCESS MODAL (MOBILE RESPONSIVE OVERLAY) */}
       {submittedAppCode && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="bg-white p-6 md:p-10 rounded-3xl shadow-2xl w-full max-w-md text-center border-b-8 border-green-500 animate-in zoom-in duration-300">
             <div className="flex justify-center mb-4">
               <div className="bg-green-500 text-white rounded-full p-4 shadow-lg">
@@ -224,7 +224,7 @@ export default function RegisterPage() {
 
       {/* TOAST NOTIFICATION */}
       {alert.show && (
-        <div className={`fixed top-5 left-1/2 -translate-x-1/2 z-[70] flex items-center p-4 w-[92%] max-w-xs rounded-xl shadow-2xl border ${alert.type === "success" ? "bg-green-600 border-green-500" : "bg-red-600 border-red-500"} text-white transition-all animate-in slide-in-from-top-full duration-300`}>
+        <div className={`fixed top-5 left-1/2 -translate-x-1/2 z-70 flex items-center p-4 w-[92%] max-w-xs rounded-xl shadow-2xl border ${alert.type === "success" ? "bg-green-600 border-green-500" : "bg-red-600 border-red-500"} text-white transition-all animate-in slide-in-from-top-full duration-300`}>
           <div className="text-sm font-bold flex-1">{alert.message}</div>
           <button onClick={() => setAlert(prev => ({ ...prev, show: false }))} className="ml-2 p-1 bg-white/10 rounded">✕</button>
         </div>
