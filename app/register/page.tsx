@@ -10,7 +10,7 @@ interface FormState {
   phone: string;
   college: string;
   degree: string;
-  last_exam_appeared: string;
+  year: string;
   cgpa: string;
   domain: string;
   duration: string; 
@@ -33,7 +33,7 @@ export default function RegisterPage() {
   // --- State ---
   const [form, setForm] = useState<FormState>({
     name: "", email: "", phone: "", college: "", degree: "",
-    last_exam_appeared: "", cgpa: "", domain: "", duration: "", 
+    year: "", cgpa: "", domain: "", duration: "", 
     duration_unit: "months", skills: "",
   });
 
@@ -93,13 +93,22 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      const res = await fetch("/api/send-verification", {
+      const res = await fetch("https://techstrota.tech/api/send-verification", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: form.email }),
       });
       
       const data = await res.json();
+
+      // 🟢 HANDLE ALREADY VERIFIED STATUS
+        if (data.status === 'already_verified') {
+            setEmailStep("verified");
+            setVerificationToken(""); // No token needed since they are already verified in DB
+            showAlert(data.message, "success");
+            return;
+        }
+        
       if (!res.ok) throw new Error(data.message);
 
       setEmailStep("sent");
@@ -150,7 +159,7 @@ export default function RegisterPage() {
       formData.append("token", verificationToken); 
       formData.append("resume_path", resume_path);
 
-      const res = await fetch("/api/submit", {
+      const res = await fetch("https://techstrota.tech/api/submit", {
         method: "POST",
         body: formData,
         headers: { Accept: "application/json" },
@@ -165,7 +174,7 @@ export default function RegisterPage() {
       // Reset Form
       setForm({
         name: "", email: "", phone: "", college: "", degree: "",
-        last_exam_appeared: "", cgpa: "", domain: "", duration: "",
+        year: "", cgpa: "", domain: "", duration: "",
         duration_unit: "months", skills: "",
       });
       setResume(null);
@@ -296,7 +305,7 @@ export default function RegisterPage() {
               <Input label="Phone Number" type="tel" required placeholder="10 Digit Number" value={form.phone} onChange={handlePhoneChange} />
               <Input label="College Name" required placeholder="University / College" value={form.college} onChange={(v) => setForm({ ...form, college: v })} />
               <Input label="Degree" required placeholder="e.g. B.Tech CS, BCA" value={form.degree} onChange={(v) => setForm({ ...form, degree: v })} />
-              <Input label="Last Exam Appeared" required placeholder="e.g. Semester 6" value={form.last_exam_appeared} onChange={(v) => setForm({ ...form, last_exam_appeared: v })} />
+              <Input label="Last Exam Appeared" required placeholder="e.g. Semester 6" value={form.year} onChange={(v) => setForm({ ...form, year: v })} />
               <Input label="CGPA / Percentage" required placeholder="e.g. 8.5 or 85%" value={form.cgpa} onChange={(v) => setForm({ ...form, cgpa: v })} />
               <Input label="Preferred Domain" required placeholder="e.g. Web Development" value={form.domain} onChange={(v) => setForm({ ...form, domain: v })} />
               
